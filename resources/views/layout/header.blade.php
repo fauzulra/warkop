@@ -52,10 +52,6 @@
                         <p class="text-xs text-gray-500 truncate">{{ Auth::user()->email }}</p>
                     </div>
 
-                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                        My Profile
-                    </a>
-
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit"

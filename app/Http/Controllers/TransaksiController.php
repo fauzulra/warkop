@@ -86,7 +86,6 @@ class TransaksiController extends Controller
                 }
                 $sale->items()->delete();
 
-                // 2. Simpan item baru & kurangi stok (logika sama seperti store())
                 foreach ($data['cart'] as $item) {
                     $menu = Menu::with('menuIngredients')->findOrFail($item['id']);
 
@@ -152,6 +151,12 @@ class TransaksiController extends Controller
     /**
      * Store a newly created resource in storage.
      */
+
+    public function newOrder()
+    {
+        session()->forget('editing_sale_id');
+        return redirect()->route('menu.index');
+    }
     public function store(Request $request)
     {
         return DB::transaction(function () use ($request) {
@@ -170,9 +175,12 @@ class TransaksiController extends Controller
                 ]);
 
                 $today = Carbon::today();
-                $latestSale = Sale::whereDate('created_at', $today)->orderBy('id', 'desc')->first();
+            
+                $latestInvoice = Sale::whereDate('created_at', $today)
+                    ->orderByRaw('CAST(SUBSTRING(invoice_number, 5) AS UNSIGNED) DESC')
+                    ->first();
                 
-                $newNumber = $latestSale ? str_pad(intval(substr($latestSale->invoice_number, -4)) + 1, 4, '0', STR_PAD_LEFT) : '0001';
+                $newNumber = $latestInvoice ? str_pad(intval(substr($latestInvoice->invoice_number, 5)) + 1, 4, '0', STR_PAD_LEFT) : '0001';
                 $invoiceNumber = 'INV-' . $newNumber;
 
                 // 1. Simpan Transaksi Utama
@@ -233,6 +241,28 @@ class TransaksiController extends Controller
                 ], 500);
             }
         });
+    }
+
+    public function printReport(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date'   => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $startDate = Carbon::parse($request->start_date)->startOfDay();
+        $endDate   = Carbon::parse($request->end_date)->endOfDay();
+
+        // Ambil data transaksi beserta relasi item dan menunya
+        $sales = Sale::with(['items.menu'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderBy('created_at', 'asc')
+            ->get();
+
+        // Menghitung grand total khusus untuk transaksi yang "selesai"
+        $totalPendapatan = $sales->where('status', 'selesai')->sum('total');
+
+        return view('transaksi.print', compact('sales', 'startDate', 'endDate', 'totalPendapatan'));
     }
 
     public function show($id)

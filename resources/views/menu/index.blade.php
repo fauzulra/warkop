@@ -246,11 +246,6 @@
                             <i class="fas fa-check mr-2"></i>
                             Proses Pesanan
                         </button>
-                        <button id="holdOrder"
-                            class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-3 rounded-lg font-medium transition duration-200">
-                            <i class="fas fa-pause mr-2"></i>
-                            Tahan Pesanan
-                        </button>
                     </div>
                 </div>
             </div>

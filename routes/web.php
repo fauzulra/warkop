@@ -24,12 +24,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/inventaris-create', [InvetarisController::class, 'create'])->name('inventaris.create');
     Route::post('/inventaris-create/store', [InvetarisController::class, 'store'])->name('inventaris.store');
     Route::get('/inventaris/check', [InvetarisController::class, 'check'])->name('inventaris.check');
+    Route::get('/inventaris/print', [InvetarisController::class, 'printReport'])->name('inventaris.print'); 
     Route::get('/inventaris/{id}/edit', [InvetarisController::class, 'edit'])->name('inventaris.edit');
     Route::put('/inventaris/{id}', [InvetarisController::class, 'update'])->name('inventaris.update');
     Route::delete('/inventaris/{id}', [InvetarisController::class, 'destroy'])->name('inventaris.destroy');
 
     // Transaksi
     Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
+    Route::get('/transaksi/print', [TransaksiController::class, 'printReport'])->name('transaksi.print');
     Route::patch('/transaksi/{id}/update-status', [TransaksiController::class, 'updateStatus'])->name('transaksi.updateStatus');
     Route::post('/transaksi', [TransaksiController::class, 'store'])->name('transaksi.store');
     Route::get('/transaksi/{id}/detail', [TransaksiController::class, 'show'])->name('transaksi.show');
@@ -39,6 +41,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/transaksi/{id}/edit-order', [TransaksiController::class, 'editOrder'])->name('transaksi.editOrder');
     Route::put('/transaksi/{id}/update-order', [TransaksiController::class, 'updateOrder'])->name('transaksi.updateOrder');
     Route::post('/transaksi/cancel-edit', [TransaksiController::class, 'cancelEdit'])->name('transaksi.cancelEdit');
+    Route::get('/transaksi/new-order', [TransaksiController::class, 'newOrder'])->name('transaksi.newOrder');
 
     // Menu
     Route::get('/menu', [MenuControlller::class, 'index'])->name('menu.index');
@@ -47,5 +50,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/menu/{id}', [MenuControlller::class, 'destroy'])->name('menu.destroy');
     Route::get('/menu/{id}/json', [MenuControlller::class, 'getJsonData'])->name('menu.json');
     Route::put('/menu/{id}', [MenuControlller::class, 'update'])->name('menu.update');
-    Route::delete('/menu/{id}', [MenuControlller::class, 'destroy'])->name('menu.destroy');
 });

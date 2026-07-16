@@ -150,7 +150,7 @@
                             </div>
                             <!-- Menampilkan rata-rata pesanan format K/M -->
                             <p class="text-2xl font-bold text-white">Rp {{ $avgOrderWeek }}</p>
-                            <p class="text-sm text-white text-opacity-80">Avg. Order</p>
+                            <p class="text-sm text-white text-opacity-80">Avg. Revenue</p>
                         </div>
                     </div>
 

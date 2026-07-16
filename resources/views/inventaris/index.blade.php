@@ -78,21 +78,13 @@
                                     </button>
                                 </a>
 
-                                {{-- Logika untuk membatasi Export Data HANYA untuk Admin --}}
                                 @role('admin')
-                                    <a href="" class="w-full block"> {{-- Sesuaikan dengan route export Anda --}}
-                                        <button
-                                            class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300 flex items-center justify-center font-medium hover:shadow-xl transform hover:-translate-y-0.5">
-                                            <i class="fas fa-download mr-2"></i>
-                                            Export Data
-                                        </button>
-                                    </a>
+                                    <button type="button" onclick="openPrintModal()"
+                                        class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300 flex items-center justify-center font-medium hover:shadow-xl transform hover:-translate-y-0.5">
+                                        <i class="fas fa-download mr-2"></i>
+                                        Export Data
+                                    </button>
                                 @endrole
-                                {{-- Jika Anda tidak menggunakan directive @role, Anda bisa gunakan: 
-                                     @if (auth()->user()->hasRole('admin')) ... @endif 
-                                     atau 
-                                     @if (auth()->user()->role === 'admin') ... @endif 
-                                --}}
                             </div>
                         </div>
                     </div>
@@ -215,6 +207,50 @@
 
     </main>
 
+    <!-- Modal Cetak Laporan Inventaris -->
+    <div id="printModal"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+        <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
+            <!-- Header Modal -->
+            <div class="flex items-center justify-between mb-4 border-b pb-4">
+                <h3 class="text-lg font-bold text-gray-800">Cetak Laporan Inventaris</h3>
+                <button type="button" onclick="closePrintModal()"
+                    class="text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 rounded-full w-8 h-8 flex items-center justify-center transition duration-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Form Filter -->
+            <form action="{{ route('inventaris.print') }}" method="GET" target="_blank">
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Dari Tanggal (Update
+                            Terakhir)</label>
+                        <input type="date" id="start_date" name="start_date" required
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-200 bg-gray-50">
+                    </div>
+                    <div>
+                        <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">Sampai Tanggal</label>
+                        <input type="date" id="end_date" name="end_date" required
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-200 bg-gray-50">
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi -->
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t">
+                    <button type="button" onclick="closePrintModal()"
+                        class="px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-200 transition duration-200">
+                        Batal
+                    </button>
+                    <button type="submit" onclick="closePrintModal()"
+                        class="px-5 py-2.5 bg-green-600 text-white text-sm font-bold rounded-lg hover:bg-green-700 shadow-sm transition duration-200 flex items-center">
+                        <i class="fas fa-print mr-2"></i> Cetak Laporan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal Konfirmasi Hapus -->
     <div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white p-6 rounded-xl shadow-lg w-96">
@@ -271,6 +307,25 @@
                 const onlyDigits = text.replace(/[^0-9-]/g, "");
                 return onlyDigits ? parseInt(onlyDigits, 10) : 0;
             }
+
+            // ========== FUNGSI MODAL CETAK LAPORAN ==========
+            window.openPrintModal = function() {
+                const today = new Date().toISOString().split('T')[0];
+                const startInput = document.getElementById('start_date');
+                const endInput = document.getElementById('end_date');
+
+                // Set default tanggal hari ini
+                if (!startInput.value) startInput.value = today;
+                if (!endInput.value) endInput.value = today;
+
+                document.getElementById('printModal').classList.remove('hidden');
+                document.body.style.overflow = "hidden";
+            };
+
+            window.closePrintModal = function() {
+                document.getElementById('printModal').classList.add('hidden');
+                document.body.style.overflow = "auto";
+            };
 
             // --- Modal Konfirmasi Hapus ---
             let deleteFormId = null;

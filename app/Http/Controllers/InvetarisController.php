@@ -22,6 +22,30 @@ class InvetarisController extends Controller
         return view('inventaris.create');
     }
 
+    public function printReport(Request $request)
+    {
+        $request->validate([
+            'start_date' => 'required|date',
+            'end_date'   => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $startDate = \Carbon\Carbon::parse($request->start_date)->startOfDay();
+        $endDate   = \Carbon\Carbon::parse($request->end_date)->endOfDay();
+
+        // Ambil data produk yang diupdate/dibuat di antara rentang waktu filter
+        $products = Product::whereBetween('updated_at', [$startDate, $endDate])
+            ->orderBy('category', 'asc')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        return view('inventaris.print', compact('products', 'startDate', 'endDate'));
+    }
+
+    public function newOrder()
+    {
+        session()->forget('editing_sale_id');
+        return redirect()->route('menu.index');
+    }
     /**
      * Store a newly created resource in storage.
      */
@@ -45,9 +69,12 @@ class InvetarisController extends Controller
         }
 
         // Generate SKU baru
-        $lastProduct = Product::orderBy('id', 'desc')->first();
-        $nextNumber = $lastProduct ? ((int) substr($lastProduct->sku_code, 3)) + 1 : 1;
-        $skuCode = 'ITM' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+        $lastProduct = Product::select('sku_code')
+        ->orderByRaw('CAST(SUBSTRING(sku_code, 4) AS UNSIGNED) DESC')
+        ->first();
+
+    $nextNumber = $lastProduct ? ((int) substr($lastProduct->sku_code, 3)) + 1 : 1;
+    $skuCode = 'ITM' . str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
 
         // Simpan produk baru
         Product::create([

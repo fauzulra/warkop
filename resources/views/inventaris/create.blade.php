@@ -19,11 +19,6 @@
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">
-                            <button type="button" id="resetForm"
-                                class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition duration-300 flex items-center font-medium hover:shadow-md">
-                                <i class="fas fa-redo mr-2"></i>
-                                Reset Form
-                            </button>
                         </div>
                     </div>
                 </div>

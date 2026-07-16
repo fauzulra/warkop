@@ -121,7 +121,7 @@
                     <!-- Right Side: Action Buttons -->
                     <div class="xl:w-[200px] flex flex-col justify-center">
                         <div class="space-y-3">
-                            <a href="{{ route('menu.index') }}">
+                            <a href="{{ route('transaksi.newOrder') }}">
                                 <button
                                     class="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg transition duration-200 flex items-center justify-center font-medium">
                                     <i class="fas fa-plus mr-2"></i>
@@ -130,10 +130,10 @@
                             </a>
 
                             @role('admin')
-                                <button
+                                <button onclick="openPrintModal()"
                                     class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg transition duration-200 flex items-center justify-center font-medium">
-                                    <i class="fas fa-download mr-2"></i>
-                                    Export Data
+                                    <i class="fas fa-print mr-2"></i>
+                                    Cetak Laporan
                                 </button>
                             @endrole
                         </div>
@@ -408,6 +408,49 @@
         </div>
     </div>
 
+    <!-- Modal Cetak Laporan -->
+    <div id="printModal"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+        <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
+            <!-- Header Modal -->
+            <div class="flex items-center justify-between mb-4 border-b pb-4">
+                <h3 class="text-lg font-bold text-gray-800">Filter Laporan Transaksi</h3>
+                <button type="button" onclick="closePrintModal()"
+                    class="text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 rounded-full w-8 h-8 flex items-center justify-center transition duration-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Form Filter -->
+            <form action="{{ route('transaksi.print') }}" method="GET" target="_blank">
+                <div class="space-y-4 mb-6">
+                    <div>
+                        <label for="start_date" class="block text-sm font-medium text-gray-700 mb-1">Dari Tanggal</label>
+                        <input type="date" id="start_date" name="start_date" required
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-200 bg-gray-50">
+                    </div>
+                    <div>
+                        <label for="end_date" class="block text-sm font-medium text-gray-700 mb-1">Sampai Tanggal</label>
+                        <input type="date" id="end_date" name="end_date" required
+                            class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 transition duration-200 bg-gray-50">
+                    </div>
+                </div>
+
+                <!-- Tombol Aksi -->
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t">
+                    <button type="button" onclick="closePrintModal()"
+                        class="px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-200 transition duration-200">
+                        Batal
+                    </button>
+                    <button type="submit" onclick="closePrintModal()"
+                        class="px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-lg hover:bg-blue-700 shadow-sm transition duration-200 flex items-center">
+                        <i class="fas fa-print mr-2"></i> Cetak Laporan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Modal Edit -->
     <div id="editModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50">
         <div class="relative top-10 mx-auto p-6 border shadow-xl rounded-xl bg-white max-w-2xl">
@@ -526,6 +569,25 @@
                     document.getElementById(deleteFormId).submit();
                 }
             });
+
+            // ========== FUNGSI MODAL CETAK LAPORAN ==========
+            window.openPrintModal = function() {
+                // Set default tanggal ke hari ini
+                const today = new Date().toISOString().split('T')[0];
+                const startInput = document.getElementById('start_date');
+                const endInput = document.getElementById('end_date');
+
+                if (!startInput.value) startInput.value = today;
+                if (!endInput.value) endInput.value = today;
+
+                document.getElementById('printModal').classList.remove('hidden');
+                document.body.style.overflow = "hidden"; // Mencegah scroll di background
+            };
+
+            window.closePrintModal = function() {
+                document.getElementById('printModal').classList.add('hidden');
+                document.body.style.overflow = "auto";
+            };
 
             // ========== FUNGSI MODAL DETAIL ==========
             window.showSaleDetail = function(saleId) {
