@@ -139,7 +139,7 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div>
-                                        <div class="text-sm font-medium text-gray-900">{{ $product->name }}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ ucwords($product->name) }}</div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -371,6 +371,29 @@
                     if (icon) icon.className = "fas fa-sort ml-1 text-gray-400";
                 });
             }
+
+            resetBtn?.addEventListener("click", (e) => {
+                e.preventDefault();
+
+                // 1. Reset input UI
+                searchInput.value = "";
+                categoryFilter.value = "";
+                statusFilter.value = "";
+
+                // 2. Tampilkan semua baris kembali (hilangkan display: none)
+                Array.from(tbody.querySelectorAll("tr")).forEach(row => {
+                    row.style.display = "";
+                });
+
+                // 3. Kembalikan ke urutan asli (DOM order)
+                allRowsOriginalOrder.forEach(row => {
+                    tbody.appendChild(row);
+                });
+
+                // 4. Reset state sort dan ikon
+                sortState = {};
+                resetIcons();
+            });
 
             function sortByColumn(index) {
                 // Ambil hanya row yang sedang terlihat

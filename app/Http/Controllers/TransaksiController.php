@@ -148,9 +148,6 @@ class TransaksiController extends Controller
         session()->forget('editing_sale_id');
         return response()->json(['success' => true]);
     }
-    /**
-     * Store a newly created resource in storage.
-     */
 
     public function newOrder()
     {
@@ -161,6 +158,7 @@ class TransaksiController extends Controller
     {
         return DB::transaction(function () use ($request) {
             try {
+                // 1. Validasi Input
                 $data = $request->validate([
                     'cart' => 'required|array',
                     'cart.*.id' => 'required|integer',
@@ -174,8 +172,20 @@ class TransaksiController extends Controller
                     'change_return' => 'required|integer',
                 ]);
 
+                foreach ($data['cart'] as $item) {
+                    $menu = Menu::with('menuIngredients')->findOrFail($item['id']);
+                    foreach ($menu->menuIngredients as $ingredient) {
+                        $product = Product::findOrFail($ingredient->product_id);
+                        $deduction = $ingredient->quantity * $item['quantity'];
+
+                        if ($product->stock < $deduction) {
+                            throw new \Exception("Stok bahan {$product->name} untuk menu {$menu->name} tidak mencukupi.");
+                        }
+                    }
+                }
+
+                // 3. Jika lolos validasi, baru buat nomor invoice
                 $today = Carbon::today();
-            
                 $latestInvoice = Sale::whereDate('created_at', $today)
                     ->orderByRaw('CAST(SUBSTRING(invoice_number, 5) AS UNSIGNED) DESC')
                     ->first();
@@ -183,7 +193,7 @@ class TransaksiController extends Controller
                 $newNumber = $latestInvoice ? str_pad(intval(substr($latestInvoice->invoice_number, 5)) + 1, 4, '0', STR_PAD_LEFT) : '0001';
                 $invoiceNumber = 'INV-' . $newNumber;
 
-                // 1. Simpan Transaksi Utama
+                // 4. Simpan Transaksi Utama
                 $sale = Sale::create([
                     'invoice_number' => $invoiceNumber,
                     'total' => $data['total'],
@@ -193,21 +203,17 @@ class TransaksiController extends Controller
                     'sale_date' => Carbon::now(),
                 ]);
 
-                // 2. Simpan Item & Kurangi Stok
+                // 5. Simpan Item & Kurangi Stok (Fase Eksekusi)
                 foreach ($data['cart'] as $item) {
                     $menu = Menu::with('menuIngredients')->findOrFail($item['id']);
 
-                    // Kurangi stok bahan baku (ingredients)
+                    // Kurangi stok produk berdasarkan komposisi menu
                     foreach ($menu->menuIngredients as $ingredient) {
                         $product = Product::findOrFail($ingredient->product_id);
-                        $deduction = $ingredient->quantity * $item['quantity'];
-
-                        if ($product->stock < $deduction) {
-                            throw new \Exception("Stok {$product->name} tidak cukup untuk menu {$menu->name}");
-                        }
-                        $product->decrement('stock', $deduction);
+                        $product->decrement('stock', $ingredient->quantity * $item['quantity']);
                     }
 
+                    // Buat record SaleItem
                     $saleItem = SaleItem::create([
                         'sale_id' => $sale->id,
                         'menu_id' => $menu->id,
@@ -217,6 +223,7 @@ class TransaksiController extends Controller
                         'note' => $item['note'] ?? null,
                     ]);
 
+                    // Simpan Addons jika ada
                     if (!empty($item['addons'])) {
                         foreach ($item['addons'] as $addon) {
                             SaleItemAddon::create([
@@ -237,7 +244,7 @@ class TransaksiController extends Controller
             } catch (\Exception $e) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+                    'message' => $e->getMessage(),
                 ], 500);
             }
         });

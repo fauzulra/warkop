@@ -206,7 +206,7 @@
                                     onclick="showSaleDetail({{ $sale->id }})">
                                     <div class="text-sm text-gray-900">
                                         @foreach ($sale->items->take(2) as $item)
-                                            {{ $item->menu->name ?? '-' }}
+                                            {{ ucwords($item->menu->name ?? '-') }}
                                             @if (!$loop->last)
                                                 ,
                                             @endif
