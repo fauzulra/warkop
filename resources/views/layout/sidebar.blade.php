@@ -1,6 +1,6 @@
 <button data-drawer-target="default-sidebar" data-drawer-toggle="default-sidebar" aria-controls="default-sidebar"
     type="button"
-    class="fixed top-4 left-4 z-50 inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
+    class="fixed top-4 left-4 z-50 inline-flex items-center p-2 text-sm text-gray-500 rounded-lg sm:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 ">
     <span class="sr-only">Open sidebar</span>
     <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
         <path clip-rule="evenodd" fill-rule="evenodd"
@@ -15,7 +15,7 @@
     aria-label="Sidebar">
 
     <!-- Background sidebar dengan scroll -->
-    <div class="h-full  py-4 overflow-y-auto bg-gray-100 dark:bg-gray-800">
+    <div class="h-full  py-2 overflow-y-auto bg-gray-100 ">
 
         <!-- MENU NAVIGATION -->
         <ul class="space-y-2 font-medium">
@@ -37,14 +37,14 @@
                 </a>
             </li>
 
-            <hr class="border-gray-200 dark:border-gray-700 my-3">
+            <hr class="border-gray-200 my-3">
 
             <!-- Dashboard Menu Item dengan Badge "Pro" -->
             <li>
                 <a href="/"
-                    class="flex items-center p-3 px-5 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group transition-colors duration-200">
+                    class="flex items-center p-3 px-5 text-gray-900 rounded-lg  hover:bg-gray-100  group transition-colors duration-200">
                     <div class="flex items-center justify-center w-6 h-6">
-                        <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                        <svg class="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
                             aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                             viewBox="0 0 18 18">
                             <path
@@ -58,9 +58,9 @@
             <!-- Data Inventaris Menu Item dengan Notification Badge -->
             <li>
                 <a href="{{ route('inventaris.index') }}"
-                    class="flex items-center p-3 px-5 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group transition-colors duration-200">
+                    class="flex items-center p-3 px-5 text-gray-900 rounded-lg  hover:bg-gray-100  group transition-colors duration-200">
                     <div class="flex items-center justify-center w-6 h-6">
-                        <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                        <svg class="w-5 h-5 text-gray-500 transition duration-75  group-hover:text-gray-900 "
                             aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                             viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
@@ -77,9 +77,9 @@
             <!-- Data Transaksi Menu Item -->
             <li>
                 <a href="{{ route('transaksi.index') }}"
-                    class="flex items-center p-3 px-5 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group transition-colors duration-200">
+                    class="flex items-center p-3 px-5 text-gray-900 rounded-lg hover:bg-gray-100 group transition-colors duration-200">
                     <div class="flex items-center justify-center w-6 h-6">
-                        <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                        <svg class="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
                             aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                             viewBox="0 0 20 20">
                             <path fill-rule="evenodd"
@@ -93,9 +93,9 @@
             <!-- Menu Item -->
             <li>
                 <a href="{{ route('menu.index') }}"
-                    class="flex items-center p-3 px-5 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group transition-colors duration-200">
+                    class="flex items-center p-3 px-5 text-gray-900 rounded-lg hover:bg-gray-100 group transition-colors duration-200">
                     <div class="flex items-center justify-center w-6 h-6">
-                        <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
+                        <svg class="w-5 h-5 text-gray-500 transition duration-75 group-hover:text-gray-900"
                             aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
                             viewBox="0 0 20 20">
                             <path

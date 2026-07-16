@@ -25,28 +25,45 @@
 
         <!-- Right side items -->
         <div class="flex items-center space-x-4">
-            <!-- Notifications -->
-            <button type="button"
-                class="relative inline-flex items-center p-2 text-sm font-medium text-center text-white bg-black mr-5 rounded-full hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">
-                <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                    viewBox="0 0 20 16">
-                    <path
-                        d="m10.036 8.278 9.258-7.79A1.979 1.979 0 0 0 18 0H2A1.987 1.987 0 0 0 .641.541l9.395 7.737Z" />
-                    <path
-                        d="M11.241 9.817c-.36.275-.801.425-1.255.427-.428 0-.845-.138-1.187-.395L0 2.6V14a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V2.5l-8.759 7.317Z" />
-                </svg>
-                <span class="sr-only">Notifications</span>
-                <div
-                    class="absolute inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-blue-800 bg-blue-100 border-2 border-white rounded-full -top-2 -end-2 dark:border-gray-900">
-                    20</div>
-            </button>
 
             <!-- Profile -->
-            <div class="flex items-center">
-                <img class="h-8 w-8 rounded-full"
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                    alt="User avatar">
-                <span class="ml-2 text-gray-700 hidden md:block">John Doe</span>
+            <div class="relative inline-block text-left">
+                <!-- Trigger: Klik John Doe atau foto untuk membuka dropdown -->
+                <button type="button" onclick="toggleProfileDropdown()"
+                    class="flex items-center focus:outline-none transition-all duration-200 hover:opacity-80">
+                    <div
+                        class="h-8 w-8 rounded-full bg-blue-600 border border-gray-200 flex items-center justify-center">
+                        <span class="text-white text-xs font-semibold">
+                            {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                        </span>
+                    </div>
+                    <span class="ml-2 text-gray-700 font-medium hidden md:block">{{ Auth::user()->name }}</span>
+                    <svg class="w-4 h-4 ml-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+
+                <!-- Dropdown Menu -->
+                <div id="profileDropdown"
+                    class="hidden absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
+
+                    <div class="px-4 py-2 border-b border-gray-100">
+                        <p class="text-sm font-semibold text-gray-900">{{ Auth::user()->name }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ Auth::user()->email }}</p>
+                    </div>
+
+                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                        My Profile
+                    </a>
+
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit"
+                            class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium">
+                            Logout
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>

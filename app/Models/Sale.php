@@ -13,8 +13,7 @@ class Sale extends Model
         'invoice_number',
         'user_id',
         'total',
-        'payment',
-        'change_return',
+        'status',
         'sale_date',
     ];
 

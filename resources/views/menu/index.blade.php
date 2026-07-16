@@ -109,8 +109,7 @@
 
                                     <!-- Image -->
                                     <div class="relative h-40 overflow-hidden">
-                                        <img src="{{ $item->image ? asset('storage/' . $item->image) : 'https://via.placeholder.com/300x200/e5e7eb/9ca3af?text=No+Image' }}"
-                                            alt="{{ $item->name }}"
+                                        <img src="{{ asset('storage/' . $item->image) }}" alt="{{ $item->name }}"
                                             class="w-full h-full object-cover transition duration-300 hover:scale-105">
 
                                         @if (!$item->is_active)
@@ -156,15 +155,13 @@
                                                 <i class="fas fa-edit"></i>
                                             </button>
 
-                                            <form action="{{ route('menu.destroy', $item->id) }}" method="POST"
-                                                onsubmit="return confirm('Yakin ingin menghapus menu ini?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit"
-                                                    class="text-red-600 hover:text-red-700 p-2 rounded hover:bg-red-50 transition duration-200">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
+                                            <!-- Ganti blok <form action="..."> ... </form> menjadi ini -->
+                                            <button type="button"
+                                                onclick="openDeleteModal('{{ route('menu.destroy', $item->id) }}')"
+                                                class="text-red-600 hover:text-red-700 p-2 rounded hover:bg-red-50 transition duration-200"
+                                                title="Hapus">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
 
                                             <div class="flex items-center flex-1">
                                                 @if ($item->is_active)
@@ -195,13 +192,27 @@
                 </div>
             </div>
 
+
             <!-- Right Panel - Cart/Order -->
             <div class="lg:col-span-1">
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 sticky top-4">
+
+                    {{-- Banner Mode Edit Transaksi --}}
+                    @if ($editingSale)
+                        <div
+                            class="bg-yellow-50 border-b border-yellow-200 text-yellow-800 text-sm px-6 py-3 rounded-t-xl flex items-center justify-between">
+                            <span><i class="fas fa-pen mr-1"></i> Mode Edit: {{ $editingSale['invoice_number'] }}</span>
+                            <button type="button" onclick="cancelEditOrder()"
+                                class="underline font-medium hover:text-yellow-900">Batal Edit</button>
+                        </div>
+                    @endif
+
                     <!-- Cart Header -->
                     <div class="p-6 border-b border-gray-200">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-lg font-semibold text-gray-900">Pesanan Baru</h3>
+                            <h3 class="text-lg font-semibold text-gray-900">
+                                {{ $editingSale ? 'Edit Pesanan' : 'Pesanan Baru' }}
+                            </h3>
                             <button id="clearCart" class="text-red-600 hover:text-red-700 text-sm font-medium">
                                 <i class="fas fa-trash mr-1"></i>
                                 Hapus Semua
@@ -316,6 +327,160 @@
         </div>
     </div>
 
+    <!-- Modal Edit Menu -->
+    <div id="editMenuModal" class="fixed inset-0 bg-black bg-opacity-50 z-[60] hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl max-w-6xl w-full shadow-xl transform transition-all my-8">
+
+                <!-- Modal Header -->
+                <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center bg-gray-50 rounded-t-xl">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">Edit Menu</h3>
+                        <p class="text-sm text-gray-600">Perbarui informasi dan bahan menu</p>
+                    </div>
+                    <button type="button" onclick="closeEditModal()"
+                        class="text-gray-400 hover:text-gray-600 transition">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                <!-- Form Edit -->
+                <form id="editMenuForm" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PUT') <!-- Method overriding untuk Update -->
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+                        <!-- Kolom Kiri: Informasi Menu -->
+                        <div class="lg:col-span-2 space-y-6">
+
+                            <!-- Nama Menu -->
+                            <div>
+                                <label for="edit_nama_menu" class="block text-sm font-medium text-gray-700 mb-2">Nama Menu
+                                    <span class="text-red-500">*</span></label>
+                                <input type="text" id="edit_nama_menu" name="name" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            </div>
+
+                            <!-- Deskripsi -->
+                            <div>
+                                <label for="edit_deskripsi" class="block text-sm font-medium text-gray-700 mb-2">Deskripsi
+                                    Menu</label>
+                                <textarea id="edit_deskripsi" name="description" rows="3"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
+                            </div>
+
+                            <!-- Harga & Kategori -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="edit_harga" class="block text-sm font-medium text-gray-700 mb-2">Harga
+                                        Jual <span class="text-red-500">*</span></label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-3 text-gray-500">Rp</span>
+                                        <input type="number" id="edit_harga" name="price" required
+                                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label for="edit_kategori"
+                                        class="block text-sm font-medium text-gray-700 mb-2">Kategori <span
+                                            class="text-red-500">*</span></label>
+                                    <select id="edit_kategori" name="category" required
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                        <option value="makanan">Makanan</option>
+                                        <option value="minuman">Minuman</option>
+                                        <option value="snack">Snack</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Upload Gambar -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Gambar Menu</label>
+                                <div class="flex items-center space-x-4">
+                                    <!-- Kotak Preview (Kiri) -->
+                                    <div id="edit_previewBox" class="relative hidden shrink-0">
+                                        <img id="edit_previewImage" src="" alt="Preview"
+                                            class="w-32 h-32 object-cover rounded-xl border border-gray-200 shadow-sm">
+                                    </div>
+
+                                    <!-- Kotak Input File (Kanan) -->
+                                    <div class="flex-1">
+                                        <input id="edit_imageInput" name="image" type="file" accept="image/*"
+                                            class="w-full text-sm text-gray-600 
+                                            file:mr-4 file:py-2 file:px-4
+                                            file:rounded-lg file:border-0
+                                            file:text-sm file:font-semibold
+                                            file:bg-blue-100 file:text-blue-700
+                                            hover:file:bg-blue-200
+                                            border-2 border-dashed border-gray-300 rounded-xl p-1.5 bg-gray-50 hover:bg-gray-100 cursor-pointer transition duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Kolom Kanan: Ringkasan -->
+                        <div class="lg:col-span-1">
+                            <div class="bg-gray-50 rounded-xl p-6 border border-gray-200 sticky top-4 space-y-4">
+
+                                <div class=" pt-4 flex justify-between items-center text-lg">
+                                    <span class="font-semibold">Harga Jual:</span>
+                                    <span id="edit_hargaJualRingkasan" class="font-bold text-blue-600">Rp 0</span>
+                                </div>
+                                <div class="pt-4">
+                                    <button type="submit"
+                                        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-300">
+                                        <i class="fas fa-save mr-2"></i> Update Menu
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Delete -->
+    <div id="deleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 z-[70] hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl max-w-md w-full shadow-xl transform transition-all p-6">
+                <div class="text-center">
+                    <!-- Ikon Peringatan -->
+                    <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                        <i class="fas fa-exclamation-triangle text-3xl text-red-600"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">Hapus Menu</h3>
+                    <p class="text-sm text-gray-500 mb-6">
+                        Apakah Anda yakin ingin menghapus menu ini? Data yang sudah dihapus tidak dapat dikembalikan.
+                    </p>
+                </div>
+
+                <div class="flex gap-3 justify-center">
+                    <!-- Tombol Batal -->
+                    <button type="button" onclick="closeDeleteModal()"
+                        class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition duration-200">
+                        Batal
+                    </button>
+
+                    <!-- Form Delete Sesungguhnya -->
+                    <form id="deleteMenuForm" method="POST" class="flex-1">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                            class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium transition duration-200">
+                            Ya, Hapus
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.editingSaleData = @json($editingSale ?? null);
+    </script>
 
     @extends('menu.script')
 @endsection

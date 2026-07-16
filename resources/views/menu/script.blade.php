@@ -1,7 +1,7 @@
 <script>
     (function() {
         // ====================================
-        // RESTAURANT ORDER SYSTEM - REFACTORED
+        // RESTAURANT ORDER SYSTEM - REFACTORED (NO ADD-ONS)
         // ====================================
 
         // ========== GLOBALS ==========
@@ -9,9 +9,7 @@
         let currentTotal = 0;
         let isEditMode = false;
         let editingItemId = null;
-
-        // Data add-ons (injected from blade)
-        const addOnsData = @json($addons);
+        let editingSaleId = null;
 
         // ========== HELPERS ==========
         function formatCurrency(amount) {
@@ -69,11 +67,6 @@
                         <p id="modalMenuPrice" class="text-emerald-600 font-bold"></p>
                     </div>
 
-                    <div id="addOnsSection" class="mb-6">
-                        <h5 class="font-medium text-gray-700 mb-3">Pilih Add-ons (Opsional)</h5>
-                        <div id="addOnsList" class="space-y-2"></div>
-                    </div>
-
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Catatan Khusus</label>
                         <textarea id="itemNote" rows="3" placeholder="Contoh: Pedas, tidak pakai bawang, dll..."
@@ -103,19 +96,12 @@
             document.getElementById('closeAddOnsModal').onclick = closeAddOnsModal;
             document.getElementById('cancelAddOns').onclick = closeAddOnsModal;
 
-            // Delegate change events inside modal for add-on checkboxes
-            modal.addEventListener('change', function(e) {
-                if (e.target && e.target.classList && e.target.classList.contains('addon-checkbox')) {
-                    updateModalTotal();
-                }
-            });
-
             return modal;
         }
 
+        // Nama fungsi dipertahankan sebagai showAddOnsModal agar tombol di HTML (jika ada) tidak rusak
         function showAddOnsModal(menuId, menuName, menuPrice, menuCategory) {
             const modal = document.getElementById('addOnsModal') || createAddOnsModal();
-            const availableAddOns = addOnsData[menuCategory] || [];
 
             isEditMode = false;
             editingItemId = null;
@@ -123,7 +109,6 @@
             document.getElementById('modalMenuName').textContent = menuName;
             document.getElementById('modalMenuPrice').textContent = formatCurrency(menuPrice);
 
-            document.getElementById('addOnsList').innerHTML = '';
             document.getElementById('itemNote').value = '';
 
             const confirmBtn = document.getElementById('confirmAddToCart');
@@ -131,25 +116,7 @@
             confirmBtn.dataset.originalQuantity = '';
             confirmBtn.dataset.editMode = '';
 
-            if (availableAddOns.length > 0) {
-                document.getElementById('addOnsSection').style.display = 'block';
-                availableAddOns.forEach(addon => {
-                    const addonHtml = `
-                    <label class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                        <div class="flex items-center">
-                            <input type="checkbox" class="addon-checkbox mr-3" value="${addon.id}" data-name="${addon.name}" data-price="${addon.price}">
-                            <span class="text-sm font-medium">${addon.name}</span>
-                        </div>
-                        <span class="text-sm text-emerald-600 font-semibold">${formatCurrency(addon.price)}</span>
-                    </label>
-                `;
-                    document.getElementById('addOnsList').insertAdjacentHTML('beforeend', addonHtml);
-                });
-            } else {
-                document.getElementById('addOnsSection').style.display = 'none';
-            }
-
-            // Attach confirm handler (replace previous)
+            // Attach confirm handler
             confirmBtn.onclick = () => confirmAddToCart(menuId, menuName, menuPrice, menuCategory);
 
             updateModalTotal();
@@ -167,33 +134,16 @@
             const modalMenuPriceEl = document.getElementById('modalMenuPrice');
             if (!modalMenuPriceEl) return;
             const basePrice = parseCurrencyToInt(modalMenuPriceEl.textContent);
-            const selectedAddOns = document.querySelectorAll('.addon-checkbox:checked');
 
-            let addOnsTotal = 0;
-            selectedAddOns.forEach(checkbox => {
-                addOnsTotal += parseInt(checkbox.dataset.price || 0, 10);
-            });
-
-            const total = basePrice + addOnsTotal;
+            const total = basePrice;
             const modalTotal = document.getElementById('modalTotal');
             if (modalTotal) modalTotal.textContent = formatCurrency(total);
         }
 
         // ========== CART FUNCTIONS ==========
         function confirmAddToCart(menuId, menuName, menuPrice, menuCategory) {
-            const selectedAddOns = [];
-            document.querySelectorAll('.addon-checkbox:checked').forEach(checkbox => {
-                selectedAddOns.push({
-                    id: parseInt(checkbox.value, 10),
-                    name: checkbox.dataset.name,
-                    price: parseInt(checkbox.dataset.price || 0, 10)
-                });
-            });
-
             const itemsNote = document.getElementById('itemNote')?.value?.trim() || '';
-            const addOnsPrice = selectedAddOns.reduce((s, a) => s + (a.price || 0), 0);
-            const totalItemPrice = (parseInt(menuPrice, 10) || 0) + addOnsPrice;
-
+            const totalItemPrice = (parseInt(menuPrice, 10) || 0);
 
             if (isEditMode && editingItemId) {
                 const itemIndex = cart.findIndex(item => item.id === editingItemId);
@@ -206,7 +156,6 @@
                         menuId,
                         name: menuName,
                         basePrice: menuPrice,
-                        addOns: selectedAddOns,
                         note: itemsNote,
                         totalPrice: totalItemPrice,
                         quantity: originalQuantity,
@@ -217,7 +166,6 @@
             } else {
                 const existingItem = cart.find(item =>
                     item.menuId === menuId &&
-                    JSON.stringify(item.addOns) === JSON.stringify(selectedAddOns) &&
                     item.note === itemsNote
                 );
 
@@ -230,7 +178,6 @@
                         menuId,
                         name: menuName,
                         basePrice: menuPrice,
-                        addOns: selectedAddOns,
                         note: itemsNote,
                         totalPrice: totalItemPrice,
                         quantity: 1,
@@ -243,7 +190,6 @@
             renderCart();
             updateCartSummary();
             closeAddOnsModal();
-
         }
 
         function renderCart() {
@@ -261,12 +207,6 @@
             }
 
             cartItems.innerHTML = cart.map(item => {
-                const addOnsHtml = item.addOns && item.addOns.length > 0 ?
-                    `<div class="mb-2"><p class="text-xs font-medium text-gray-700 mb-1">Add-ons:</p>
-                    ${item.addOns.map(addon => `<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-1 mb-1">${addon.name} (+${formatCurrency(addon.price)})</span>`).join('')}
-                   </div>` :
-                    '';
-
                 const noteHtml = item.note ?
                     `<div class="mb-2"><p class="text-xs font-medium text-gray-700">Catatan:</p><p class="text-xs text-gray-600 bg-yellow-50 p-2 rounded">${item.note}</p></div>` :
                     '';
@@ -276,13 +216,12 @@
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex-1">
                             <h5 class="font-semibold text-gray-900">${item.name}</h5>
-                            <p class="text-sm text-gray-600">Base: ${formatCurrency(item.basePrice)}</p>
+                            <p class="text-sm text-gray-600">Harga: ${formatCurrency(item.basePrice)}</p>
                         </div>
                         <button onclick="removeFromCart(${item.id})" class="text-red-600 hover:text-red-700 p-1">
                             <i class="fas fa-trash text-sm"></i>
                         </button>
                     </div>
-                    ${addOnsHtml}
                     ${noteHtml}
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
@@ -310,12 +249,6 @@
             showAddOnsModal(item.menuId, item.name, item.basePrice, item.category);
 
             setTimeout(() => {
-                item.addOns.forEach(addon => {
-                    const checkbox = document.querySelector(
-                        `#addOnsModal .addon-checkbox[value="${addon.id}"]`);
-                    if (checkbox) checkbox.checked = true;
-                });
-
                 const noteField = document.getElementById('itemNote');
                 if (noteField) noteField.value = item.note || '';
 
@@ -456,17 +389,12 @@
             const customerMoney = parseInt(customerMoneyInput.value || 0, 10) || 0;
             const change = customerMoney - currentTotal;
 
-            // Build payload: normalize cart item fields for backend
             const payloadCart = cart.map(item => ({
-                id: item.menuId, // corresponds to menu_id in DB
+                id: item.menuId,
                 quantity: item.quantity,
                 price: parseInt(item.basePrice, 10) || 0,
                 subtotal: (item.totalPrice * item.quantity) || 0,
-                note: item.note || '',
-                addons: (item.addOns || []).map(a => ({
-                    id: a.id,
-                    price: a.price
-                }))
+                note: item.note || ''
             }));
 
             const data = {
@@ -476,12 +404,14 @@
                 change_return: change
             };
 
-            // Close payment modal immediately (UX)
             closePaymentModal();
 
-            // POST to Laravel endpoint
-            fetch('/transaksi', {
-                    method: 'POST',
+            const isEditingOrder = !!editingSaleId;
+            const url = isEditingOrder ? `/transaksi/${editingSaleId}/update-order` : '/transaksi';
+            const method = isEditingOrder ? 'PUT' : 'POST';
+
+            fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -491,28 +421,10 @@
                 .then(res => res.json())
                 .then(response => {
                     if (response.success) {
-                        // Fill success modal
-                        const successTotal = document.getElementById('successTotal');
-                        const successCustomerMoney = document.getElementById('successCustomerMoney');
-                        const successChange = document.getElementById('successChange');
-
-                        if (successTotal) successTotal.textContent = formatCurrency(currentTotal);
-                        if (successCustomerMoney) successCustomerMoney.textContent = formatCurrency(
-                            customerMoney);
-                        if (successChange) successChange.textContent = formatCurrency(change);
-
-                        const successModal = document.getElementById('successModal');
-                        if (successModal) successModal.classList.remove('hidden');
-
-                        showSuccessMessage('Pesanan Berhasil ditambahkan');
-
-                        // Clear cart after a short delay to allow user to see results
-                        setTimeout(() => clearCart(), 1000);
-
-                        // Optionally show invoice number
-                        if (response.invoice_number) {
-                            console.info('Invoice:', response.invoice_number);
-                        }
+                        showSuccessMessage(isEditingOrder ? 'Transaksi berhasil diperbarui' :
+                            'Pesanan berhasil ditambahkan');
+                        editingSaleId = null;
+                        setTimeout(() => window.location.href = '/transaksi', 1000);
                     } else {
                         alert(response.message || 'Gagal menyimpan transaksi.');
                     }
@@ -528,30 +440,108 @@
             if (successModal) successModal.classList.add('hidden');
         }
 
-        // ========== MENU HELPERS ==========
-        // Safe stub — ubah sesuai kebutuhan (simpan ke DB via AJAX, atau render DOM)
-        function addNewMenu(menuData) {
-            console.log('addNewMenu stub:', menuData);
-            // contoh: bisa menambahkan elemen DOM untuk menu baru jika kamu punya container menu list
-            // const menuList = document.getElementById('menuList');
-            // if (menuList) { /* render item */ }
-        }
+        // ========== MENU HELPERS & EDIT MODAL LOGIC ==========
 
         function editMenu(menuId) {
-            alert(`Edit menu ID: ${menuId}\nFitur edit akan segera tersedia!`);
+            fetch(`/menu/${menuId}/json`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('editMenuForm').action = `/menu/${menuId}`;
+                    document.getElementById('edit_nama_menu').value = data.name;
+                    document.getElementById('edit_deskripsi').value = data.description || '';
+                    document.getElementById('edit_harga').value = data.price;
+                    document.getElementById('edit_kategori').value = data.category;
+
+                    const previewBox = document.getElementById('edit_previewBox');
+                    const previewImg = document.getElementById('edit_previewImage');
+                    if (data.image) {
+                        previewImg.src = `/storage/${data.image}`;
+                        previewBox.classList.remove('hidden');
+                    } else {
+                        previewBox.classList.add('hidden');
+                    }
+
+                    const container = document.getElementById('edit_daftarBahan');
+                    if (container) container.innerHTML = '';
+
+                    if (data.menu_ingredients && data.menu_ingredients.length > 0) {
+                        data.menu_ingredients.forEach(ing => {
+                            addEditBahanRow(ing.product_id, ing.quantity);
+                        });
+                    } else {
+                        addEditBahanRow();
+                    }
+
+                    updateEditRingkasan();
+                    document.getElementById('editMenuModal').classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Error fetching menu data:', error);
+                    alert('Gagal mengambil data menu.');
+                });
         }
 
-        function deleteMenu(menuId) {
-            if (!confirm('Hapus menu ini?')) return;
-            const menuElement = document.querySelector(`button[onclick*="deleteMenu(${menuId})"]`)?.closest(
-                '.menu-item');
-            if (menuElement) menuElement.style.display = 'none';
+        function closeEditModal() {
+            const modal = document.getElementById('editMenuModal');
+            if (modal) modal.classList.add('hidden');
+        }
 
-            // Remove any cart items with this menuId
-            cart = cart.filter(item => item.menuId !== menuId);
-            renderCart();
-            updateCartSummary();
-            showSuccessMessage('Menu berhasil dihapus!');
+        // --- MODAL KONFIRMASI DELETE ---
+        function openDeleteModal(actionUrl) {
+            const modal = document.getElementById('deleteConfirmModal');
+            const form = document.getElementById('deleteMenuForm');
+
+            if (modal && form) {
+                form.action = actionUrl;
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function closeDeleteModal() {
+            const modal = document.getElementById('deleteConfirmModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function addEditBahanRow(productId = '', quantity = '') {
+            const templateEl = document.getElementById('editBahanTemplate');
+            if (!templateEl) return;
+
+            const template = templateEl.content.cloneNode(true);
+
+            if (productId) template.querySelector('.edit-bahan-select').value = productId;
+            if (quantity) template.querySelector('.edit-qty-input').value = quantity;
+
+            document.getElementById('edit_daftarBahan').appendChild(template);
+            updateEditRingkasan();
+        }
+
+        function updateEditRingkasan() {
+            const items = document.querySelectorAll('#edit_daftarBahan .edit-bahan-item');
+            let estimasiBiaya = 0;
+
+            items.forEach(item => {
+                const select = item.querySelector('.edit-bahan-select');
+                const qty = parseFloat(item.querySelector('.edit-qty-input').value) || 0;
+                const opt = select.options[select.selectedIndex];
+                const price = parseFloat(opt?.dataset?.price) || 0;
+                estimasiBiaya += (price * qty);
+            });
+
+            const hargaJual = parseFloat(document.getElementById('edit_harga')?.value) || 0;
+
+            const totalBahanEl = document.getElementById('edit_totalBahan');
+            const estimasiBiayaEl = document.getElementById('edit_estimasiBiaya');
+            const hargaJualRingkasanEl = document.getElementById('edit_hargaJualRingkasan');
+
+            if (totalBahanEl) totalBahanEl.textContent = items.length;
+            if (estimasiBiayaEl) estimasiBiayaEl.textContent = formatCurrency(estimasiBiaya);
+            if (hargaJualRingkasanEl) hargaJualRingkasanEl.textContent = formatCurrency(hargaJual);
+        }
+
+        function addNewMenu(menuData) {
+            console.log('addNewMenu stub:', menuData);
         }
 
         function filterMenuItems() {
@@ -585,6 +575,27 @@
 
         // ========== INIT & EVENT BINDING ==========
         document.addEventListener('DOMContentLoaded', function() {
+
+            // ==== LOAD DATA EDIT TRANSAKSI (jika ada) ====
+            if (window.editingSaleData) {
+                editingSaleId = window.editingSaleData.id;
+                cart = (window.editingSaleData.items || []).map(item => {
+                    return {
+                        id: Date.now() + Math.random(),
+                        menuId: item.menuId,
+                        name: item.name,
+                        basePrice: item.basePrice,
+                        note: item.note,
+                        totalPrice: item.basePrice,
+                        quantity: item.quantity,
+                        category: item.category
+                    };
+                });
+
+                const processBtn = document.getElementById('processOrder');
+                if (processBtn) processBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Update Pesanan';
+            }
+
             // create modal once
             createAddOnsModal();
 
@@ -665,6 +676,12 @@
                     if (e.target === this) closeSuccessModal();
                 });
             }
+            const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+            if (deleteConfirmModal) {
+                deleteConfirmModal.addEventListener('click', function(e) {
+                    if (e.target === this) closeDeleteModal();
+                });
+            }
 
             // Filter & search bindings
             const menuSearch = document.getElementById('menuSearch');
@@ -674,6 +691,31 @@
             if (menuSearch) menuSearch.addEventListener('input', filterMenuItems);
             if (categoryFilter) categoryFilter.addEventListener('change', filterMenuItems);
             if (clearCartBtn) clearCartBtn.addEventListener('click', clearCart);
+
+            // EVENT BINDINGS UNTUK MODAL EDIT 
+            const editHargaInput = document.getElementById('edit_harga');
+            if (editHargaInput) {
+                editHargaInput.addEventListener('input', updateEditRingkasan);
+            }
+
+            const editImageInput = document.getElementById('edit_imageInput');
+            if (editImageInput) {
+                editImageInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const previewImg = document.getElementById('edit_previewImage');
+                            const previewBox = document.getElementById('edit_previewBox');
+                            if (previewImg && previewBox) {
+                                previewImg.src = e.target.result;
+                                previewBox.classList.remove('hidden');
+                            }
+                        }
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
 
             // Add CSS animations
             const style = document.createElement('style');
@@ -686,9 +728,20 @@
             document.head.appendChild(style);
         });
 
+        function cancelEditOrder() {
+            fetch('/transaksi/cancel-edit', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            }).then(() => location.reload());
+        }
+        window.cancelEditOrder = cancelEditOrder;
+
+
         // ========== Expose for global onclick handlers ==========
         window.restaurantOrderSystem = {
-            addToCart: showAddOnsModal,
+            addToCart: showAddOnsModal, // Disimpan sebagai alias jika sebelumnya digunakan di HTML
             clearCart,
             getCartData,
             updateQuantity,
@@ -700,7 +753,11 @@
             calculateChange,
             addNewMenu,
             editMenu,
-            deleteMenu,
+            closeEditModal,
+            openDeleteModal,
+            closeDeleteModal,
+            addEditBahanRow,
+            updateEditRingkasan,
             filterMenuItems,
             formatCurrency,
             showSuccessMessage
@@ -720,7 +777,11 @@
         window.calculateChange = calculateChange;
         window.addNewMenu = addNewMenu;
         window.editMenu = editMenu;
-        window.deleteMenu = deleteMenu;
+        window.closeEditModal = closeEditModal;
+        window.openDeleteModal = openDeleteModal;
+        window.closeDeleteModal = closeDeleteModal;
+        window.addEditBahanRow = addEditBahanRow;
+        window.updateEditRingkasan = updateEditRingkasan;
         window.filterMenuItems = filterMenuItems;
         window.formatCurrency = formatCurrency;
         window.showSuccessMessage = showSuccessMessage;

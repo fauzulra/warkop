@@ -77,11 +77,22 @@
                                         Tambah Item
                                     </button>
                                 </a>
-                                <button
-                                    class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300 flex items-center justify-center font-medium hover:shadow-xl transform hover:-translate-y-0.5">
-                                    <i class="fas fa-download mr-2"></i>
-                                    Export Data
-                                </button>
+
+                                {{-- Logika untuk membatasi Export Data HANYA untuk Admin --}}
+                                @role('admin')
+                                    <a href="" class="w-full block"> {{-- Sesuaikan dengan route export Anda --}}
+                                        <button
+                                            class="w-full bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition duration-300 flex items-center justify-center font-medium hover:shadow-xl transform hover:-translate-y-0.5">
+                                            <i class="fas fa-download mr-2"></i>
+                                            Export Data
+                                        </button>
+                                    </a>
+                                @endrole
+                                {{-- Jika Anda tidak menggunakan directive @role, Anda bisa gunakan: 
+                                     @if (auth()->user()->hasRole('admin')) ... @endif 
+                                     atau 
+                                     @if (auth()->user()->role === 'admin') ... @endif 
+                                --}}
                             </div>
                         </div>
                     </div>
@@ -184,11 +195,12 @@
                                             class="text-blue-600 hover:text-blue-900" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form action="{{ route('inventaris.destroy', $product->id) }}" method="POST"
-                                            onsubmit="return confirm('Yakin hapus item ini?')">
+                                        <form id="deleteForm-{{ $product->id }}"
+                                            action="{{ route('inventaris.destroy', $product->id) }}" method="POST">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900" title="Delete">
+                                            <button type="button" onclick="openDeleteModal('{{ $product->id }}')"
+                                                class="text-red-600 hover:text-red-900" title="Delete">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -202,6 +214,22 @@
         </div>
 
     </main>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl shadow-lg w-96">
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Konfirmasi Hapus</h3>
+            <p class="text-gray-600 mb-6">Apakah Anda yakin ingin menghapus item ini? Data yang dihapus tidak dapat
+                dikembalikan.</p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeDeleteModal()"
+                    class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Batal</button>
+                <button id="confirmDeleteBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Ya,
+                    Hapus</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const table = document.getElementById("inventoryTable");
@@ -243,6 +271,25 @@
                 const onlyDigits = text.replace(/[^0-9-]/g, "");
                 return onlyDigits ? parseInt(onlyDigits, 10) : 0;
             }
+
+            // --- Modal Konfirmasi Hapus ---
+            let deleteFormId = null;
+
+            window.openDeleteModal = function(id) {
+                deleteFormId = `deleteForm-${id}`;
+                document.getElementById('deleteModal').classList.remove('hidden');
+            };
+
+            window.closeDeleteModal = function() {
+                deleteFormId = null;
+                document.getElementById('deleteModal').classList.add('hidden');
+            };
+
+            document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+                if (deleteFormId) {
+                    document.getElementById(deleteFormId).submit();
+                }
+            });
 
             function applyFilter() {
                 const q = (searchInput.value || "").toLowerCase();

@@ -69,6 +69,23 @@
         </footer>
     </div>
 
+    <script>
+        function toggleProfileDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Menutup dropdown jika user mengklik area di luar dropdown
+        window.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('profileDropdown');
+            const button = e.target.closest('button[onclick="toggleProfileDropdown()"]');
+
+            if (!button && !dropdown.classList.contains('hidden') && !e.target.closest('#profileDropdown')) {
+                dropdown.classList.add('hidden');
+            }
+        });
+    </script>
+
 </body>
 
 </html>

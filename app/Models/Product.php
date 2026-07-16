@@ -3,8 +3,9 @@
 namespace App\Models;
 
 use App\Models\Addon;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Product extends Model
@@ -25,9 +26,9 @@ class Product extends Model
         return $this->hasMany(MenuIngredient::class);
     }
 
-    public function inventoryEntries()
+    public function user()
     {
-        return $this->hasMany(InventoryEntries::class);
+        return $this->belongsTo(User::class);
     }
 
     public function menus()

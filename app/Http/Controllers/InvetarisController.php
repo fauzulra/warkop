@@ -7,9 +7,7 @@ use Illuminate\Http\Request;
 
 class InvetarisController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+    
     public function index()
     {
     $products = Product::latest()->paginate(10);
@@ -39,7 +37,7 @@ class InvetarisController extends Controller
             // update stok + harga
             $existingProduct->update([
                 'stock'      => $existingProduct->stock + $request->stock,
-                'unit_price' => $cleanPrice, // pakai harga terbaru
+                'unit_price' => $cleanPrice, 
             ]);
 
             return redirect()->route('inventaris.index')
@@ -53,11 +51,12 @@ class InvetarisController extends Controller
 
         // Simpan produk baru
         Product::create([
+            'user_id'    => auth()->id(),
             'sku_code'   => $skuCode,
             'name'       => $request->name,
             'category'   => $request->category,
             'stock'      => $request->stock,
-            'unit_price' => $cleanPrice, // simpan angka bersih
+            'unit_price' => $cleanPrice, 
         ]);
 
         return redirect()->route('inventaris.index')->with('success', 'Produk berhasil ditambahkan!');

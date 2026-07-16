@@ -49,7 +49,7 @@
                                     </div>
                                     <input type="text" id="nama_item" name="name" required
                                         class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-                                        placeholder="Contoh: Laptop Dell Inspiron 15">
+                                        placeholder="Contoh: Beans Arabica">
                                 </div>
                             </div>
 
