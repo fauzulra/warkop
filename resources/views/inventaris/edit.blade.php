@@ -1,6 +1,6 @@
 @extends('layout.app')
-@section('title', 'Edit Data Inventaris')
-@section('page-title', 'Edit Data Inventaris')
+@section('title', 'Edit Data Stok Barang')
+@section('page-title', 'Edit Data Stok Barang')
 @section('content')
     <div class="bg-white shadow-sm border-b">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -14,7 +14,7 @@
                             </a>
                             <div>
                                 <h2 class="text-xl font-semibold text-gray-900">Edit Item</h2>
-                                <p class="text-sm text-gray-500 mt-1">Perbarui data item inventaris</p>
+                                <p class="text-sm text-gray-500 mt-1">Perbarui data item Stok Barang</p>
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">

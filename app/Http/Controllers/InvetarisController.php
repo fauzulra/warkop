@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MenuIngredient;
 use App\Models\Product;
+use App\Models\SaleItem;
 use Illuminate\Http\Request;
 
 class InvetarisController extends Controller
@@ -41,10 +43,46 @@ class InvetarisController extends Controller
         return view('inventaris.print', compact('products', 'startDate', 'endDate'));
     }
 
-    public function newOrder()
+    public function history($id)
     {
-        session()->forget('editing_sale_id');
-        return redirect()->route('menu.index');
+        try {
+            $product = \App\Models\Product::findOrFail($id); 
+            $currentStock = $product->stock;
+
+            // Tambahkan join ke tabel 'sales' untuk mengambil invoice
+            $history = \App\Models\SaleItem::join('sales', 'sale_items.sale_id', '=', 'sales.id')
+                ->join('menus', 'sale_items.menu_id', '=', 'menus.id')
+                ->join('menu_ingredients', 'menus.id', '=', 'menu_ingredients.menu_id')
+                ->where('menu_ingredients.product_id', $id)
+                ->select(
+                    'sale_items.created_at',
+                    'sales.invoice_number', // Sesuaikan dengan nama kolom invoice di tabel sales Anda
+                    'menus.name as menu_name',
+                    \Illuminate\Support\Facades\DB::raw('(sale_items.quantity * menu_ingredients.quantity) as total_terpakai')
+                )
+                ->orderBy('sale_items.created_at', 'desc')
+                ->get();
+
+            $runningStock = $currentStock;
+            $formattedHistory = [];
+
+            foreach ($history as $item) {
+                $formattedHistory[] = [
+                    'date'       => $item->created_at->format('d M Y H:i'),
+                    'invoice'    => $item->invoice_number ?? '-', // Masukkan ke array JSON
+                    'menu_name'  => $item->menu_name,
+                    'quantity'   => $item->total_terpakai,
+                    'stok_akhir' => $runningStock
+                ];
+
+                $runningStock += $item->total_terpakai;
+            }
+
+            return response()->json($formattedHistory);
+            
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
     /**
      * Store a newly created resource in storage.

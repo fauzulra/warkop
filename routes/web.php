@@ -28,6 +28,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/inventaris/{id}/edit', [InvetarisController::class, 'edit'])->name('inventaris.edit');
     Route::put('/inventaris/{id}', [InvetarisController::class, 'update'])->name('inventaris.update');
     Route::delete('/inventaris/{id}', [InvetarisController::class, 'destroy'])->name('inventaris.destroy');
+    Route::get('/inventaris/{id}/history', [InvetarisController::class, 'history']);
 
     // Transaksi
     Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
@@ -42,6 +43,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/transaksi/{id}/update-order', [TransaksiController::class, 'updateOrder'])->name('transaksi.updateOrder');
     Route::post('/transaksi/cancel-edit', [TransaksiController::class, 'cancelEdit'])->name('transaksi.cancelEdit');
     Route::get('/transaksi/new-order', [TransaksiController::class, 'newOrder'])->name('transaksi.newOrder');
+    
 
     // Menu
     Route::get('/menu', [MenuControlller::class, 'index'])->name('menu.index');

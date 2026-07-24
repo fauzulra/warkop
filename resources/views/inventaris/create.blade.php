@@ -1,6 +1,6 @@
 @extends('layout.app')
-@section('title', 'Tambah Data Inventaris')
-@section('page-title', 'Tambah Data Inventaris')
+@section('title', 'Tambah Data Stok Barang')
+@section('page-title', 'Tambah Data Stok Barang')
 @section('content')
     <div class="bg-white shadow-sm border-b">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,7 +15,7 @@
                             <div>
                                 <h2 class="text-xl font-semibold text-gray-900">Tambah Item Baru</h2>
                                 <p class="text-sm text-gray-500 mt-1">Lengkapi form di bawah untuk menambahkan item
-                                    inventaris</p>
+                                    Stok Barang</p>
                             </div>
                         </div>
                         <div class="flex items-center space-x-3">

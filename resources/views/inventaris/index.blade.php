@@ -1,6 +1,6 @@
 @extends('layout.app')
-@section('title', 'Data Inventaris')
-@section('page-title', 'Data Inventaris')
+@section('title', 'Data Stok')
+@section('page-title', 'Data Stok')
 @section('styles')
     <style>
         /* Menambahkan cursor pointer pada header tabel agar terlihat bisa diklik */
@@ -183,6 +183,13 @@
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex items-center space-x-2">
+                                        <!-- Tombol Riwayat Baru -->
+                                        <button type="button"
+                                            onclick="openHistoryModal('{{ $product->id }}', '{{ $product->name }}')"
+                                            class="text-teal-600 hover:text-teal-900" title="Riwayat Pemakaian">
+                                            <i class="fas fa-history"></i>
+                                        </button>
+
                                         <a href="{{ route('inventaris.edit', $product->id) }}"
                                             class="text-blue-600 hover:text-blue-900" title="Edit">
                                             <i class="fas fa-edit"></i>
@@ -207,13 +214,89 @@
 
     </main>
 
+    <!-- Modal Riwayat Pemakaian -->
+    <div id="historyModal"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+        <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-2xl relative max-h-[90vh] flex flex-col">
+            <!-- Header Modal -->
+            <div class="flex items-center justify-between mb-4 border-b pb-4">
+                <h3 class="text-lg font-bold text-gray-800">
+                    Riwayat Pemakaian: <span id="historyItemName" class="text-blue-600"></span>
+                </h3>
+
+                <div class="flex items-center space-x-3">
+                    <!-- Tambahan Filter Sort -->
+                    <select id="historySort" onchange="renderHistoryTable()"
+                        class="px-3 pr-8 py-1.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm bg-white">
+                        <option value="desc">Paling Baru</option>
+                        <option value="asc">Paling Lama</option>
+                    </select>
+
+                    <!-- Tombol Close (Silang) -->
+                    <button type="button" onclick="closeHistoryModal()"
+                        class="text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 rounded-full w-8 h-8 flex items-center justify-center transition duration-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabel Riwayat -->
+            <div class="overflow-y-auto flex-1">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Tanggal Dibuat</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        No. Invoice</th>
+                                    <th
+                                        class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Menu Terkait</th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Jumlah Terpakai</th>
+                                    <th
+                                        class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Stok Akhir</th>
+                                </tr>
+                            </thead>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="bg-white divide-y divide-gray-200">
+
+                    </tbody>
+                </table>
+
+                <!-- Indikator Loading & Kosong -->
+                <div id="historyLoading" class="hidden py-8 text-center text-gray-500">
+                    <i class="fas fa-spinner fa-spin mr-2 text-blue-500"></i> Memuat data...
+                </div>
+                <div id="historyEmpty" class="hidden py-8 text-center text-gray-500">
+                    Belum ada riwayat pemakaian untuk item ini.
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="mt-4 pt-4 border-t flex justify-end">
+                <button type="button" onclick="closeHistoryModal()"
+                    class="px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-bold rounded-lg hover:bg-gray-200 transition duration-200">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Cetak Laporan Inventaris -->
     <div id="printModal"
         class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
         <div class="bg-white p-6 rounded-xl shadow-lg w-full max-w-md relative">
             <!-- Header Modal -->
             <div class="flex items-center justify-between mb-4 border-b pb-4">
-                <h3 class="text-lg font-bold text-gray-800">Cetak Laporan Inventaris</h3>
+                <h3 class="text-lg font-bold text-gray-800">Cetak Laporan Stok</h3>
                 <button type="button" onclick="closePrintModal()"
                     class="text-gray-400 hover:text-red-500 bg-gray-100 hover:bg-red-50 rounded-full w-8 h-8 flex items-center justify-center transition duration-200">
                     <i class="fas fa-times"></i>
@@ -371,6 +454,97 @@
                     if (icon) icon.className = "fas fa-sort ml-1 text-gray-400";
                 });
             }
+
+            // Variabel global untuk menyimpan data riwayat sementara
+            let currentHistoryData = [];
+
+            // FUNGSI MEMBUKA MODAL DAN FETCH DATA
+            window.openHistoryModal = function(productId, productName) {
+                document.getElementById('historyItemName').innerText = productName.toUpperCase();
+                document.getElementById('historyModal').classList.remove('hidden');
+                document.body.style.overflow = "hidden";
+
+                // Reset dropdown filter ke "Paling Baru" setiap kali modal dibuka
+                document.getElementById('historySort').value = 'desc';
+
+                const tableBody = document.getElementById('historyTableBody');
+                const loading = document.getElementById('historyLoading');
+                const emptyState = document.getElementById('historyEmpty');
+
+                tableBody.innerHTML = '';
+                loading.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+
+                fetch(`/inventaris/${productId}/history`)
+                    .then(response => response.json())
+                    .then(data => {
+                        loading.classList.add('hidden');
+
+                        if (data.length === 0) {
+                            emptyState.classList.remove('hidden');
+                            currentHistoryData = [];
+                            return;
+                        }
+
+                        // Simpan data ke variabel, data dari backend sudah berurutan "Paling Baru"
+                        currentHistoryData = data;
+
+                        // Panggil fungsi render
+                        renderHistoryTable();
+                    })
+                    .catch(error => {
+                        loading.classList.add('hidden');
+                        tableBody.innerHTML =
+                            `<tr><td colspan="4" class="text-center text-red-500 py-4">Gagal memuat data.</td></tr>`;
+                        console.error('Error fetching history:', error);
+                    });
+            };
+
+            // FUNGSI UNTUK MERENDER TABEL BERDASARKAN FILTER
+            window.renderHistoryTable = function() {
+                const tableBody = document.getElementById('historyTableBody');
+                const sortOrder = document.getElementById('historySort').value;
+
+                tableBody.innerHTML = ''; // Kosongkan tabel sebelum render ulang
+
+                // Buat salinan data agar array aslinya tidak berubah secara permanen
+                let dataToRender = [...currentHistoryData];
+
+                // Jika dipilih "Paling Lama", balikkan urutan array (reverse)
+                if (sortOrder === 'asc') {
+                    dataToRender.reverse();
+                }
+
+                // Render baris data ke dalam tabel
+                dataToRender.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50 transition duration-200';
+
+                    row.innerHTML = `
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500">${item.date}</td>
+                        <!-- Tambahan Data Invoice -->
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-mono text-indigo-600 font-medium">${item.invoice}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">${item.menu_name}</td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-right font-semibold text-red-600">
+                            - ${item.quantity}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900 text-right font-semibold text-blue-600">
+                            ${item.stok_akhir}
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            };
+
+            window.closeHistoryModal = function() {
+                document.getElementById('historyModal').classList.add('hidden');
+                document.body.style.overflow = "auto";
+            };
+
+            window.closeHistoryModal = function() {
+                document.getElementById('historyModal').classList.add('hidden');
+                document.body.style.overflow = "auto";
+            };
 
             resetBtn?.addEventListener("click", (e) => {
                 e.preventDefault();

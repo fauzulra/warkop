@@ -172,6 +172,7 @@ class TransaksiController extends Controller
                     'change_return' => 'required|integer',
                 ]);
 
+                // 2. Validasi Ketersediaan Stok
                 foreach ($data['cart'] as $item) {
                     $menu = Menu::with('menuIngredients')->findOrFail($item['id']);
                     foreach ($menu->menuIngredients as $ingredient) {
@@ -184,14 +185,25 @@ class TransaksiController extends Controller
                     }
                 }
 
-                // 3. Jika lolos validasi, baru buat nomor invoice
-                $today = Carbon::today();
+                // 3. Jika lolos validasi, baru buat nomor invoice dengan format INV + DDMMYY + 001
+                $today = \Carbon\Carbon::today();
+                $dateString = $today->format('dmy'); // Format: Tanggal(24) Bulan(07) Tahun(26)
+                
+                // Cari invoice terakhir di hari ini
                 $latestInvoice = Sale::whereDate('created_at', $today)
-                    ->orderByRaw('CAST(SUBSTRING(invoice_number, 5) AS UNSIGNED) DESC')
+                    ->orderBy('invoice_number', 'desc')
                     ->first();
                 
-                $newNumber = $latestInvoice ? str_pad(intval(substr($latestInvoice->invoice_number, 5)) + 1, 4, '0', STR_PAD_LEFT) : '0001';
-                $invoiceNumber = 'INV-' . $newNumber;
+                if ($latestInvoice) {
+                    // Ambil 3 digit urutan paling belakang dan tambahkan 1
+                    $lastSequence = intval(substr($latestInvoice->invoice_number, -3));
+                    $newSequence = str_pad($lastSequence + 1, 3, '0', STR_PAD_LEFT);
+                } else {
+                    // Jika belum ada transaksi hari ini, mulai dari 001
+                    $newSequence = '001';
+                }
+
+                $invoiceNumber = 'INV' . $dateString . $newSequence;
 
                 // 4. Simpan Transaksi Utama
                 $sale = Sale::create([
@@ -200,7 +212,7 @@ class TransaksiController extends Controller
                     'payment' => $data['payment'],
                     'change_return' => $data['change_return'],
                     'status' => 'ongoing',
-                    'sale_date' => Carbon::now(),
+                    'sale_date' => \Carbon\Carbon::now(),
                 ]);
 
                 // 5. Simpan Item & Kurangi Stok (Fase Eksekusi)

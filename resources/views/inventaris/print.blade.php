@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Inventaris - {{ $startDate->format('d/m/Y') }} sd {{ $endDate->format('d/m/Y') }}</title>
+    <title>Laporan Stok Barang - {{ $startDate->format('d/m/Y') }} sd {{ $endDate->format('d/m/Y') }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @media print {
@@ -30,7 +30,7 @@
 
     <!-- Header Laporan -->
     <div class="text-center mb-8 border-b-2 border-gray-800 pb-4">
-        <h1 class="text-2xl font-bold uppercase">Laporan Inventaris Barang</h1>
+        <h1 class="text-2xl font-bold uppercase">Laporan Stok Barang</h1>
         <p class="text-gray-600">Periode: {{ $startDate->format('d F Y') }} - {{ $endDate->format('d F Y') }}</p>
     </div>
 
